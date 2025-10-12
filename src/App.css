@@ -88,15 +88,3 @@
 .todo-table tr:hover {
   background-color: #f0f0f0; /* light‑grey on hover */
 }
-
-/* Global button styling */
-button,
-.amplify-button {
-  background-color: black;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0.15rem 0.8rem; /* reduced height */
-  cursor: pointer;
-  /*margin-top: 0.5rem;*/
-}
