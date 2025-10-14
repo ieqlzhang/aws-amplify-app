@@ -76,10 +76,10 @@ This document provides step-by-step implementation instructions for integrating 
 - [x] Commit and push changes to trigger automatic deployment
 
 ### **Step 4: Design PostgreSQL Schema for Order Management**
-- [ ] Create enhanced Order table schema:
+- [x] Create enhanced Order table schema:
   ```sql
   CREATE TABLE orders (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_number VARCHAR(100) UNIQUE NOT NULL,
     content TEXT,
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
@@ -93,7 +93,7 @@ This document provides step-by-step implementation instructions for integrating 
     owner_id VARCHAR(255) NOT NULL
   );
   ```
-- [ ] Create indexes for performance optimization:
+- [x] Create indexes for performance optimization:
   ```sql
   CREATE INDEX idx_orders_owner_id ON orders(owner_id);
   CREATE INDEX idx_orders_status ON orders(status);
@@ -102,9 +102,9 @@ This document provides step-by-step implementation instructions for integrating 
   ```
 
 ### **Step 5: Create Database Initialization Lambda Function**
-- [ ] Create database initialization script
-- [ ] Set up database migration scripts
-- [ ] Create database initialization Lambda function
+- [x] Create database initialization script
+- [x] Set up database migration scripts
+- [x] Create database initialization Lambda function
 
 ### **Step 6: Implement Connection Management**
 - [ ] Implement connection pooling strategy

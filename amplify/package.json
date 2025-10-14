@@ -5,5 +5,8 @@
     "constructs": "^10.0.0",
     "pg": "^8.11.0",
     "@types/pg": "^8.10.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.450.0"
   }
 }
