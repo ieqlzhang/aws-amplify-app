@@ -1,0 +1,13 @@
+{
+  "name": "order-resolvers",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "pg": "^8.11.0",
+    "@aws-sdk/client-secrets-manager": "^3.450.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.0",
+    "@types/pg": "^8.10.0"
+  }
+}

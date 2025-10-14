@@ -2,7 +2,8 @@ import { defineFunction } from '@aws-amplify/backend';
 
 export const orderResolvers = defineFunction({
   name: 'orderResolvers',
-  entry: './index.py',
+  entry: './index.ts',
+  runtime: 20,
   timeoutSeconds: 30,
   memoryMB: 512,
   environment: {

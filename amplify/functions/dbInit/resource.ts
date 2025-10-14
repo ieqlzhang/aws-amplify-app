@@ -2,7 +2,8 @@ import { defineFunction } from '@aws-amplify/backend';
 
 export const dbInit = defineFunction({
   name: 'dbInit',
-  entry: './index.py',
+  entry: './index.ts',
+  runtime: 20,
   timeoutSeconds: 120,
   memoryMB: 512,
   environment: {

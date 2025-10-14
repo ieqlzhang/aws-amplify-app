@@ -4,11 +4,13 @@ import { data } from './data/resource';
 import { VpcResource } from './storage/vpc-resource';
 import { DatabaseResource } from './storage/database-resource';
 import { dbInit } from './functions/dbInit/resource';
+import { orderResolvers } from './functions/orderResolvers/resource';
 
 const backend = defineBackend({
   auth,
   data,
   dbInit,
+  orderResolvers,
 });
 
 // Create infrastructure stack
@@ -27,6 +29,11 @@ const databaseResource = new DatabaseResource(infraStack, 'DatabaseResource', {
 backend.dbInit.addEnvironment('DB_SECRET_ARN', databaseResource.databaseSecret.secretArn);
 backend.dbInit.addEnvironment('DB_ENDPOINT', databaseResource.databaseEndpoint);
 backend.dbInit.addEnvironment('DB_NAME', 'ordermanagement');
+
+// Configure orderResolvers function with environment variables
+backend.orderResolvers.addEnvironment('DB_SECRET_ARN', databaseResource.databaseSecret.secretArn);
+backend.orderResolvers.addEnvironment('DB_ENDPOINT', databaseResource.databaseEndpoint);
+backend.orderResolvers.addEnvironment('DB_NAME', 'ordermanagement');
 
 // Note: Lambda permissions for Secrets Manager access will be configured via IAM policies
 
