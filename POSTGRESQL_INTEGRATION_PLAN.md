@@ -114,26 +114,26 @@ This document provides step-by-step implementation instructions for integrating 
 ### **Step 7: Create Core Lambda Functions for Order Operations**
 
 #### **Query Resolvers:**
-- [ ] `listOrders` - Fetch orders with filtering and pagination
-- [ ] `getOrder` - Fetch single order by ID
+- [x] `listOrders` - Fetch orders with filtering and pagination
+- [x] `getOrder` - Fetch single order by ID
 
 #### **Mutation Resolvers:**
-- [ ] `createOrder` - Create new order item
-- [ ] `updateOrder` - Update existing order
-- [ ] `deleteOrder` - Delete order by ID
+- [x] `createOrder` - Create new order item
+- [x] `updateOrder` - Update existing order
+- [x] `deleteOrder` - Delete order by ID
 
 ### **Step 8: Implement Lambda Function Base Structure**
-- [ ] Create base Lambda handler with PostgreSQL connection
-- [ ] Implement error handling and logging
-- [ ] Add input validation and sanitization
-- [ ] Configure timeout and memory settings
-- [ ] Implement proper connection closing and cleanup
+- [x] Create base Lambda handler with PostgreSQL connection
+- [x] Implement error handling and logging
+- [x] Add input validation and sanitization
+- [x] Configure timeout and memory settings
+- [x] Implement proper connection closing and cleanup
 
 ### **Step 9: Configure Security and Authorization**
-- [ ] Integrate Cognito user context in Lambda functions
-- [ ] Implement row-level security for owner-based access
-- [ ] Add request validation and rate limiting
-- [ ] Configure IAM roles and policies
+- [x] Integrate Cognito user context in Lambda functions
+- [x] Implement row-level security for owner-based access
+- [x] Add request validation and rate limiting
+- [x] Configure IAM roles and policies
 
 ### **Step 10: Update GraphQL Schema for Order Management**
 - [ ] Modify `amplify/data/resource.ts` to use custom resolvers
