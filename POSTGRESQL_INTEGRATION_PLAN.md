@@ -28,26 +28,24 @@ This document provides step-by-step implementation instructions for integrating 
 ## Implementation Steps
 
 ### **Step 1: Update Amplify Dependencies**
-- [ ] Add required CDK dependencies to `amplify/package.json`:
+- [x] Add required CDK dependencies to `amplify/package.json`:
   ```json
   {
     "devDependencies": {
-      "@aws-cdk/aws-rds": "^2.138.0",
-      "@aws-cdk/aws-ec2": "^2.138.0",
-      "@aws-cdk/aws-secretsmanager": "^2.138.0",
-      "@aws-cdk/aws-lambda-nodejs": "^2.138.0",
+      "aws-cdk-lib": "^2.138.0",
+      "constructs": "^10.0.0",
       "pg": "^8.11.0",
       "@types/pg": "^8.10.0"
     }
   }
   ```
-- [ ] Run `npm install` in the `amplify/` directory to install dependencies
-- [ ] Install PostgreSQL client libraries in the root project: `npm install pg @types/pg`
+- [x] Run `npm install` in the `amplify/` directory to install dependencies
+- [x] Install PostgreSQL client libraries in the root project: `npm install pg @types/pg`
 
 ### **Step 2: Create VPC Infrastructure via CDK**
 **Note**: All infrastructure will be defined as CDK code in Amplify backend configuration, NOT manual AWS CLI deployment.
 
-- [ ] Create `amplify/storage/vpc-resource.ts` with VPC CDK constructs:
+- [x] Create `amplify/storage/vpc-resource.ts` with VPC CDK constructs:
   ```typescript
   import { Vpc, SubnetType, SecurityGroup } from 'aws-cdk-lib/aws-ec2';
   import { defineBackend } from '@aws-amplify/backend';
@@ -57,8 +55,8 @@ This document provides step-by-step implementation instructions for integrating 
   // Route tables for public/private subnet routing
   // Security groups for RDS and Lambda communication
   ```
-- [ ] Update `amplify/backend.ts` to include VPC resource
-- [ ] Commit and push changes to trigger automatic deployment via Amplify
+- [x] Update `amplify/backend.ts` to include VPC resource
+- [x] Commit and push changes to trigger automatic deployment via Amplify
 
 ### **Step 3: Set Up Aurora PostgreSQL RDS via CDK**
 **Note**: RDS will be defined as CDK code and deployed automatically through Amplify pipeline.
