@@ -61,7 +61,7 @@ This document provides step-by-step implementation instructions for integrating 
 ### **Step 3: Set Up Aurora PostgreSQL RDS via CDK**
 **Note**: RDS will be defined as CDK code and deployed automatically through Amplify pipeline.
 
-- [ ] Create `amplify/storage/database-resource.ts` with RDS CDK constructs:
+- [x] Create `amplify/storage/database-resource.ts` with RDS CDK constructs:
   ```typescript
   import { DatabaseCluster } from 'aws-cdk-lib/aws-rds';
   import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
@@ -71,9 +71,9 @@ This document provides step-by-step implementation instructions for integrating 
   // AWS Secrets Manager for database credentials
   // VPC endpoints for Secrets Manager (cost optimization)
   ```
-- [ ] Configure database initialization and migration scripts
-- [ ] Update `amplify/backend.ts` to include database resource
-- [ ] Commit and push changes to trigger automatic deployment
+- [x] Configure database initialization and migration scripts
+- [x] Update `amplify/backend.ts` to include database resource
+- [x] Commit and push changes to trigger automatic deployment
 
 ### **Step 4: Design PostgreSQL Schema for Order Management**
 - [ ] Create enhanced Order table schema:
