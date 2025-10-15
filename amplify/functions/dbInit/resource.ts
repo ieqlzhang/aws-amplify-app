@@ -12,3 +12,6 @@ export const dbInit = defineFunction({
     DB_NAME: process.env.DB_NAME || 'ordermanagement',
   },
 });
+
+// Note: VPC configuration will be added in backend.ts using CDK
+// This allows the function to access RDS database in private subnets

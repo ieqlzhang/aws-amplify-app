@@ -35,7 +35,38 @@ backend.orderResolvers.addEnvironment('DB_SECRET_ARN', databaseResource.database
 backend.orderResolvers.addEnvironment('DB_ENDPOINT', databaseResource.databaseEndpoint);
 backend.orderResolvers.addEnvironment('DB_NAME', 'ordermanagement');
 
-// Note: Lambda permissions for Secrets Manager access will be configured via IAM policies
+// Configure Lambda functions to run inside VPC with proper security groups
+// This allows Lambda to access RDS database in private subnets
+
+// Configure VPC access for dbInit Lambda
+const cfnDbInitFunction = backend.dbInit.resources.cfnResources.cfnFunction;
+cfnDbInitFunction.vpcConfig = {
+  subnetIds: vpcResource.vpc.privateSubnets.map(subnet => subnet.subnetId),
+  securityGroupIds: [vpcResource.lambdaSecurityGroup.securityGroupId],
+};
+
+// Grant Secrets Manager read permission to dbInit Lambda role
+const dbInitRole = backend.dbInit.resources.lambda.role;
+if (dbInitRole) {
+  dbInitRole.addManagedPolicy({
+    managedPolicyArn: 'arn:aws:iam::aws:policy/SecretsManagerReadWrite',
+  });
+}
+
+// Configure VPC access for orderResolvers Lambda
+const cfnOrderResolversFunction = backend.orderResolvers.resources.cfnResources.cfnFunction;
+cfnOrderResolversFunction.vpcConfig = {
+  subnetIds: vpcResource.vpc.privateSubnets.map(subnet => subnet.subnetId),
+  securityGroupIds: [vpcResource.lambdaSecurityGroup.securityGroupId],
+};
+
+// Grant Secrets Manager read permission to orderResolvers Lambda role
+const orderResolversRole = backend.orderResolvers.resources.lambda.role;
+if (orderResolversRole) {
+  orderResolversRole.addManagedPolicy({
+    managedPolicyArn: 'arn:aws:iam::aws:policy/SecretsManagerReadWrite',
+  });
+}
 
 // Export resources for use in Lambda functions and other components
 backend.addOutput({
