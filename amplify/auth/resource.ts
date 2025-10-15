@@ -11,11 +11,7 @@ export const auth = defineAuth({
     email: true,
   },
   userAttributes: {
-    // Standard attributes
-    email: {
-      required: true,
-      mutable: true,
-    },
+    // Standard attributes - these are enabled by setting them to { required: true/false, mutable: true/false }
     givenName: {
       required: false,
       mutable: true,
