@@ -1,145 +1,194 @@
-import { useEffect, useState } from "react";
-import TodoModal from "./components/TodoModal";
-import ModifyTodoModal from "./components/ModifyTodoModal";
-import type { Schema } from "../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
+import React, { useState, useEffect } from 'react';
+import { generateClient } from 'aws-amplify/data';
 import { useAuthenticator } from '@aws-amplify/ui-react';
-import "./App.css";
+import type { Schema } from '../amplify/data/resource';
+import UserList from './components/UserList';
+import UserModal from './components/UserModal';
 
 const client = generateClient<Schema>();
 
+export interface UserProfile {
+  userId: string;
+  email?: string | null;
+  salesOrganizations?: (string | null)[] | null;
+  allowedCountryPols?: (string | null)[] | null;
+  permissions?: (string | null)[] | null;
+  isActive?: boolean | null;
+  owner?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 function App() {
-const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-const [showModal, setShowModal] = useState(false);
-const [showModifyModal, setShowModifyModal] = useState(false);
-const [modifyTodoId, setModifyTodoId] = useState<string | null>(null);
-const [modifyTodoContent, setModifyTodoContent] = useState("");
-  // Removed local newContent state; TodoModal manages its own input state
-  const { user, signOut } = useAuthenticator();
+  const { user, signOut } = useAuthenticator((context) => [context.user]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
+    fetchUsers();
   }, []);
 
-  function openCreateModal() {
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await client.models.UserProfile.list();
+      
+      if (response.data) {
+        setUsers(response.data);
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError('Failed to fetch users. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateUser = () => {
+    setEditingUser(null);
     setShowModal(true);
-  }
+  };
 
-  function handleCancel() {
-    setShowModal(false);
-  }
+  const handleEditUser = (user: UserProfile) => {
+    setEditingUser(user);
+    setShowModal(true);
+  };
 
-  // handleSubmit is now managed inside TodoModal component
+  const handleSaveUser = async (userData: Omit<UserProfile, 'userId'> & { userId?: string }) => {
+    try {
+      setError(null);
+      setSuccess(null);
 
-    
-function deleteTodo(id: string) {
-  client.models.Todo.delete({ id })
-}
+      if (editingUser) {
+        // Update existing user
+        await client.models.UserProfile.update({
+          userId: editingUser.userId,
+          ...userData,
+        });
+        setSuccess('User profile updated successfully!');
+      } else {
+        // Create new user
+        if (!userData.userId) {
+          setError('User ID is required for new users.');
+          return;
+        }
+        
+        await client.models.UserProfile.create({
+          userId: userData.userId,
+          email: userData.email,
+          salesOrganizations: userData.salesOrganizations,
+          allowedCountryPols: userData.allowedCountryPols,
+          permissions: userData.permissions,
+          isActive: userData.isActive ?? false,
+        });
+        setSuccess('User profile created successfully!');
+      }
 
-function openModifyModal(id: string, content: string) {
-  setModifyTodoId(id);
-  setModifyTodoContent(content);
-  setShowModifyModal(true);
-}
+      setShowModal(false);
+      setEditingUser(null);
+      await fetchUsers();
+    } catch (err) {
+      console.error('Error saving user:', err);
+      setError('Failed to save user profile. Please try again.');
+    }
+  };
 
-function handleModifyCancel() {
-  setShowModifyModal(false);
-  setModifyTodoId(null);
-  setModifyTodoContent("");
-}
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user profile?')) {
+      return;
+    }
 
-function handleUpdate(content: string) {
-  if (modifyTodoId) {
-    client.models.Todo.update({ id: modifyTodoId, content });
-  }
-  handleModifyCancel();
-}
+    try {
+      setError(null);
+      setSuccess(null);
 
-  // Called by TodoModal when a new todo is submitted
-  function handleCreate(content: string) {
-    client.models.Todo.create({ content });
-  }
+      await client.models.UserProfile.delete({ userId });
+      setSuccess('User profile deleted successfully!');
+      await fetchUsers();
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      setError('Failed to delete user profile. Please try again.');
+    }
+  };
+
+  const clearMessages = () => {
+    setError(null);
+    setSuccess(null);
+  };
 
   return (
-    <>
-      <main>
-        <h1>{user?.signInDetails?.loginId}'s todos</h1>
-        
-        <table className="todo-table">
-          <thead>
-            <tr>
-              <th>Content</th>
-              <th>Status</th>
-<th>Created</th>
-<th>Updated</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {todos.map((todo) => (
-              <tr
-                key={todo.id}
-                style={{ cursor: "default" }}
-              >
-                <td>{todo.content}</td>
-                <td>{todo.isDone ? "Done" : "Pending"}</td>
-<td>{new Date(todo.createdAt).toLocaleDateString()}</td>
-<td>{new Date(todo.updatedAt).toLocaleDateString()}</td>
-                <td>
-<a
-  href="#"
-  className="action-link modify-link"
-  onClick={(e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (todo.id && todo.content) {
-      openModifyModal(todo.id!, todo.content!);
-    }
-  }}
->
-  Modify
-</a>
-                  {" | "}
-<a
-  href="#"
-  className="action-link delete-link"
-  onClick={(e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    deleteTodo(todo.id);
-  }}
->
-  Delete
-</a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        
-        <button onClick={openCreateModal}>+ new</button>
-        <div>
-          🥳 App successfully hosted. Try creating a new todo.
-          <br />
-          <a href="https://docs.amplify.aws/react/start/quickstart/#make-frontend-updates">
-            Review next step of this tutorial.
-          </a>
+    <div className="container">
+      <div className="header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1>Admin Dashboard</h1>
+            <p>Welcome, {user?.signInDetails?.loginId || 'Admin'}</p>
+          </div>
+          <button onClick={signOut} className="btn btn-secondary">
+            Sign Out
+          </button>
         </div>
-        
-        <button onClick={signOut}>Sign out</button>
-      </main>
-      <TodoModal isOpen={showModal} onClose={handleCancel} onCreate={handleCreate} />
-      <ModifyTodoModal
-        isOpen={showModifyModal}
-        onClose={handleModifyCancel}
-        onUpdate={handleUpdate}
-        initialContent={modifyTodoContent}
-      />
-    </>
+      </div>
+
+      {error && (
+        <div className="error">
+          {error}
+          <button 
+            onClick={clearMessages}
+            style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {success && (
+        <div className="success">
+          {success}
+          <button 
+            onClick={clearMessages}
+            style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      <div className="users-section">
+        <div className="users-header">
+          <h2>User Profiles ({users.length})</h2>
+          <button onClick={handleCreateUser} className="btn btn-primary">
+            Create New User
+          </button>
+        </div>
+
+        <UserList
+          users={users}
+          loading={loading}
+          onEditUser={handleEditUser}
+          onDeleteUser={handleDeleteUser}
+          onRefresh={fetchUsers}
+        />
+      </div>
+
+      {showModal && (
+        <UserModal
+          user={editingUser}
+          onSave={handleSaveUser}
+          onCancel={() => {
+            setShowModal(false);
+            setEditingUser(null);
+          }}
+        />
+      )}
+    </div>
   );
-  
 }
 
 export default App;
