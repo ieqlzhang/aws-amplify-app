@@ -220,8 +220,9 @@ function validateUuid(uuidString: string): boolean {
 }
 
 function generateOrderNumber(): string {
+  const timestamp = Date.now().toString(36).toUpperCase();
   const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `ORD-${randomId}`;
+  return `ORD-${timestamp}-${randomId}`;
 }
 
 function getUserIdFromEvent(event: GraphQLEvent): string {
@@ -254,7 +255,7 @@ function validateOrderInput(orderData: Record<string, any>): Record<string, any>
   const validated: Record<string, any> = {};
   
   // Validate content
-  if ('content' in orderData && orderData.content !== null) {
+  if ('content' in orderData && orderData.content !== null && orderData.content !== undefined) {
     if (typeof orderData.content !== 'string') {
       throw new ValidationError('Content must be a string');
     }
@@ -265,7 +266,7 @@ function validateOrderInput(orderData: Record<string, any>): Record<string, any>
   }
   
   // Validate status
-  if ('status' in orderData && orderData.status !== null) {
+  if ('status' in orderData && orderData.status !== null && orderData.status !== undefined) {
     if (!ORDER_STATUSES.includes(orderData.status)) {
       throw new ValidationError(`Status must be one of: ${ORDER_STATUSES.join(', ')}`);
     }
@@ -273,7 +274,7 @@ function validateOrderInput(orderData: Record<string, any>): Record<string, any>
   }
   
   // Validate carrier
-  if ('carrier' in orderData && orderData.carrier !== null) {
+  if ('carrier' in orderData && orderData.carrier !== null && orderData.carrier !== undefined) {
     if (typeof orderData.carrier !== 'string') {
       throw new ValidationError('Carrier must be a string');
     }
@@ -283,20 +284,44 @@ function validateOrderInput(orderData: Record<string, any>): Record<string, any>
     validated.carrier = orderData.carrier.trim() || null;
   }
   
-  // Similar validation for other fields...
-  if ('resourceType' in orderData && orderData.resourceType !== null) {
-    validated.resource_type = orderData.resourceType;
+  // Validate resourceType
+  if ('resourceType' in orderData && orderData.resourceType !== null && orderData.resourceType !== undefined) {
+    if (typeof orderData.resourceType !== 'string') {
+      throw new ValidationError('Resource type must be a string');
+    }
+    if (orderData.resourceType.length > MAX_RESOURCE_TYPE_LENGTH) {
+      throw new ValidationError(`Resource type must be ${MAX_RESOURCE_TYPE_LENGTH} characters or less`);
+    }
+    validated.resource_type = orderData.resourceType.trim() || null;
   }
   
-  if ('departureLocation' in orderData && orderData.departureLocation !== null) {
-    validated.departure_location = orderData.departureLocation;
+  // Validate departureLocation
+  if ('departureLocation' in orderData && orderData.departureLocation !== null && orderData.departureLocation !== undefined) {
+    if (typeof orderData.departureLocation !== 'string') {
+      throw new ValidationError('Departure location must be a string');
+    }
+    if (orderData.departureLocation.length > MAX_LOCATION_LENGTH) {
+      throw new ValidationError(`Departure location must be ${MAX_LOCATION_LENGTH} characters or less`);
+    }
+    validated.departure_location = orderData.departureLocation.trim() || null;
   }
   
-  if ('destinationLocation' in orderData && orderData.destinationLocation !== null) {
-    validated.destination_location = orderData.destinationLocation;
+  // Validate destinationLocation
+  if ('destinationLocation' in orderData && orderData.destinationLocation !== null && orderData.destinationLocation !== undefined) {
+    if (typeof orderData.destinationLocation !== 'string') {
+      throw new ValidationError('Destination location must be a string');
+    }
+    if (orderData.destinationLocation.length > MAX_LOCATION_LENGTH) {
+      throw new ValidationError(`Destination location must be ${MAX_LOCATION_LENGTH} characters or less`);
+    }
+    validated.destination_location = orderData.destinationLocation.trim() || null;
   }
   
-  if ('isDone' in orderData && orderData.isDone !== null) {
+  // Validate isDone
+  if ('isDone' in orderData && orderData.isDone !== null && orderData.isDone !== undefined) {
+    if (typeof orderData.isDone !== 'boolean') {
+      throw new ValidationError('isDone must be a boolean');
+    }
     validated.is_done = orderData.isDone;
   }
   
@@ -331,7 +356,6 @@ async function listOrdersResolver(event: GraphQLEvent): Promise<GraphQLResponse>
   try {
     const userId = getUserIdFromEvent(event);
     const args = event.arguments || {};
-    const filter = args.filter || {};
     
     // Build query with basic owner filter
     let query = `
@@ -345,16 +369,22 @@ async function listOrdersResolver(event: GraphQLEvent): Promise<GraphQLResponse>
     const params: any[] = [userId];
     let paramIndex = 2;
     
-    // Add filters
-    if (filter.status) {
+    // Add filters (flattened arguments now)
+    if (args.status) {
       query += ` AND status = $${paramIndex}`;
-      params.push(filter.status);
+      params.push(args.status);
       paramIndex++;
     }
     
-    if (filter.carrier) {
+    if (args.carrier) {
       query += ` AND carrier ILIKE $${paramIndex}`;
-      params.push(`%${filter.carrier}%`);
+      params.push(`%${args.carrier}%`);
+      paramIndex++;
+    }
+    
+    if (typeof args.isDone === 'boolean') {
+      query += ` AND is_done = $${paramIndex}`;
+      params.push(args.isDone);
       paramIndex++;
     }
     
@@ -431,17 +461,21 @@ async function getOrderResolver(event: GraphQLEvent): Promise<GraphQLResponse> {
 async function createOrderResolver(event: GraphQLEvent): Promise<GraphQLResponse> {
   try {
     const userId = getUserIdFromEvent(event);
-    const inputData = event.arguments?.input || {};
+    const args = event.arguments || {};
     
-    // Validate input
-    const validatedData = validateOrderInput(inputData);
+    // Validate input (now flattened arguments)
+    const validatedData = validateOrderInput(args);
     
     // Generate order number
     const orderNumber = generateOrderNumber();
     
     // Set defaults
-    validatedData.status = validatedData.status || 'pending';
-    validatedData.is_done = validatedData.is_done || false;
+    if (!validatedData.status) {
+      validatedData.status = 'pending';
+    }
+    if (!('is_done' in validatedData)) {
+      validatedData.is_done = false;
+    }
     
     // Build insert query
     const fields = ['order_number', 'owner_id', ...Object.keys(validatedData)];
@@ -483,8 +517,8 @@ async function createOrderResolver(event: GraphQLEvent): Promise<GraphQLResponse
 async function updateOrderResolver(event: GraphQLEvent): Promise<GraphQLResponse> {
   try {
     const userId = getUserIdFromEvent(event);
-    const inputData = event.arguments?.input || {};
-    const orderId = inputData.id;
+    const args = event.arguments || {};
+    const orderId = args.id;
     
     if (!orderId) {
       return createErrorResponse('Order ID is required', 'VALIDATION_ERROR');
@@ -494,8 +528,8 @@ async function updateOrderResolver(event: GraphQLEvent): Promise<GraphQLResponse
       return createErrorResponse('Invalid order ID format', 'VALIDATION_ERROR');
     }
     
-    // Validate input (excluding ID)
-    const updateData = { ...inputData };
+    // Validate input (excluding ID, now flattened)
+    const updateData = { ...args };
     delete updateData.id;
     const validatedData = validateOrderInput(updateData);
     
