@@ -2,10 +2,7 @@
   "type": "module",
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.910.0",
-    "@aws-sdk/lib-dynamodb": "^3.910.0",
-    "jsonwebtoken": "^9.0.2"
+    "@aws-sdk/lib-dynamodb": "^3.910.0"
   },
-  "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.10"
-  }
+  "devDependencies": {}
 }

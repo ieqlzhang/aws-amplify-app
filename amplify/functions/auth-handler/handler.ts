@@ -1,6 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
-import * as jwt from 'jsonwebtoken';
 
 const dynamoClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
@@ -100,17 +99,41 @@ function extractJWTToken(authorizationToken: string): any {
 
     const token = authorizationToken.replace('Bearer ', '');
     
-    // For development, we'll decode without verification
+    // Simple JWT decode without verification (for development)
     // In production, you should verify the token signature
-    const decoded = jwt.decode(token);
+    const decoded = decodeJWT(token);
     
-    if (!decoded || typeof decoded === 'string') {
+    if (!decoded) {
       return null;
     }
 
     return decoded;
   } catch (error) {
     console.error('Error extracting JWT token:', error);
+    return null;
+  }
+}
+
+/**
+ * Simple JWT decoder without signature verification
+ * WARNING: This does not verify the token signature - only use for development/testing
+ */
+function decodeJWT(token: string): any {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
+    
+    // Decode the payload (second part)
+    const payload = parts[1];
+    // Add padding if needed for base64 decoding
+    const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
+    const decodedPayload = Buffer.from(paddedPayload, 'base64url').toString('utf-8');
+    
+    return JSON.parse(decodedPayload);
+  } catch (error) {
+    console.error('Error decoding JWT:', error);
     return null;
   }
 }
